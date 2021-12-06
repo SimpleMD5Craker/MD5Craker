@@ -15,7 +15,8 @@ import java.nio.charset.StandardCharsets;
  * The master communicator is part of the master, which will use UDP to collect and send message.
  * The communicator periodically waits for datagrams from workers for 150 ms, if there is no datagram in, then the
  * communicator send datagram(tasks) that wait in the queue, together with another component QueueManager,
- * which stores received datagrams as well as datagrams to be sent,   */
+ * which stores received datagrams as well as datagrams to be sent
+ */
 public class MasterCommunicator implements Runnable{
     private DatagramSocket masterSocket;
 

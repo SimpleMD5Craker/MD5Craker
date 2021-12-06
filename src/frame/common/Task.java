@@ -49,6 +49,27 @@ public class Task {
         return result;
     }
 
+    public boolean isTaskFinished() {
+        return !result.equals("null");
+    }
+
+    public boolean isResultsFound() {
+        return !result.equals("null") && !result.equalsIgnoreCase("notFound");
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Task task = (Task) o;
+        return userUid.equals(task.userUid) && range.equals(task.range);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(userUid, range);
+    }
+
 //    public static String[] partitionTask(int workerSize) {
 //        int passwordMaxLen = Config.MAXIMUM_PASSWORD_LENGTH;
 //

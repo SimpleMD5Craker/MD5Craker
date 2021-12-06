@@ -12,5 +12,7 @@ public class Config {
 
     public static int MASTER_MAXIMUM_CHECK_RECEIVED_NUM = 10;
 
+    public static long MASTER_SLEEP_INTERVAL = 100; // ms
+
     public static int MAXIMUM_PASSWORD_LENGTH = 5;
 }

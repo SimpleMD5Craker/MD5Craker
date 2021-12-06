@@ -9,8 +9,11 @@ class MasterQueueManager {
 
     private ConcurrentLinkedQueue<Message> toSendMsg;
 
-    /* Queue of userUid, the form of userUid is: "userId:userInput" */
+    /* Queue of userUid, the format of userUid is: "userId:userInput" */
     private ConcurrentLinkedQueue<String> newComingUsers;
+
+    /* Queue of result, the format of the element is: "userId:results" */
+    private ConcurrentLinkedQueue<String> resultsQueue;
 
     private static final MasterQueueManager manager = new MasterQueueManager();
 
@@ -57,6 +60,18 @@ class MasterQueueManager {
             return null;
         } else {
             return newComingUsers.poll();
+        }
+    }
+
+    public void newResult(String userRes) {
+        resultsQueue.offer(userRes);
+    }
+
+    public String pollResult() {
+        if(resultsQueue.isEmpty()) {
+            return null;
+        } else {
+            return resultsQueue.poll();
         }
     }
 }
