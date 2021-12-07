@@ -52,7 +52,10 @@ public class WorkerNode implements Node {
                 }
             }
 
-            // 2. Send heartbeat to master
+            // 2. Prepare heartbeat message to master
+            // TODO: get task from cracker
+            Message heartbeat = new Message(Message.Type.HEARTBEAT, null, getMasterAddress(), getSelfAddress());
+            WorkerQueueManager.getManager().newSending(heartbeat);
         }
     }
 
