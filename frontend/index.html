@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        var user_id = 0;
+        var user_list = [];
+        var user_count = 0;
+        var identifier = Math.ceil(Math.random() * 10000)
+        function find_user_index(uid) {
+            for(let i = 0; i < user_list.length; i++) {
+                if (user_list[i] == undefined) {
+                    continue;
+                } else {
+                    if (user_list[i].uid == uid) {
+                        return i;
+                    }
+                }
+            }
+            return -1;
+        }
+
+        function template(user_id) {
+            var text = "<div><form id=\"form" + user_id 
+            + "\" action=\"\">user" + 
+            user_id + 
+            "<input id=\"pwd" + user_id
+             + "\" type=\"text\" name=\"password\"/><input value=\"submit\" type=\'button\' onclick=\"submit_input(" 
+            + user_id + ")\">" + 
+            "</form><div>user" + user_id + 
+            " result: </div><div id=\"d" + user_id + 
+            "\"></div></div>";
+            return text;
+        }
+        function result_template(user) {
+            var text = "<div> input: " + user.password + " output: " + user.result + "</div>";
+            return text;
+        }
+        var user_input = template(user_id);
+        function add_user() {
+            $('.div1').append(user_input);
+            var user = {
+            uid: user_id,
+            password: null,
+            result: null,
+            };
+            user_list[user_count] = user;
+            user_id++;
+            user_count++;
+            user_input = template(user_id);
+            console.log(user_list)
+        }
+
+        function show_result(uid, result) {
+            var res_tab = $('#d' + uid);
+            var index = find_user_index(uid);
+            user_list[index].result = result;
+            result_text = result_template(user_list[index]);
+            res_tab.append(result_text);
+        }
+
+        function submit_input(uid) {
+            var input_data = $('#pwd' + uid)
+            // console.log(input_data.val());
+            var data = {'uid': identifier + "-" + uid, 'password': input_data.val()}
+            var index = find_user_index(uid);
+            user_list[index].password = input_data.val();
+            $.ajax({
+                type: "POST",
+                contentType: 'application/json',
+                dataType: "json",
+                url: "http://localhost:31000/decode",
+                data: JSON.stringify(data),
+                success: function (result) {
+                    console.log(result);
+                    show_result(result.uid, result.result);
+                },
+                error: function () {
+                    alert("user" + identifier + "-" + uid + "error");
+                }
+            });
+        }
+    </script>
+	<meta charset="UTF-8">
+	<title>Password Cracker</title>
+</head>
+
+<body>
+    <h1 id='title'>Password Cracker</h1>
+    <h1 id='sub-title'>CS 655 Geni Mini Project </h1>
+    <button id="add-button" type='button' onclick="add_user()">Add user</button>
+    <div class="div1">
+    </div>
+</body>
+</html>
