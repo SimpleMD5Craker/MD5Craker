@@ -261,4 +261,8 @@ public class MasterNode implements Node {
     public static void addNewUserRequest(String userUid) {
         MasterQueueManager.getManager().newUser(userUid);
     }
+
+    public static String getNewResult() {
+        return MasterQueueManager.getManager().pollResult();
+    }
 }
