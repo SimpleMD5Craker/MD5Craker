@@ -12,6 +12,10 @@
                 if (user_list[i] == undefined) {
                     continue;
                 } else {
+                    // console.log(i);
+                    // console.log(user_list[i].uid);
+                    // console.log(uid);
+                    // console.log(user_list[i].uid == uid);
                     if (user_list[i].uid == uid) {
                         return i;
                     }
@@ -25,7 +29,7 @@
             + "\" action=\"\">user" + 
             user_id + 
             "<input id=\"pwd" + user_id
-             + "\" type=\"text\" name=\"password\"/><input value=\"submit\" type=\'button\' onclick=\"submit_input(" 
+             + "\" type=\"text\" name=\"password\"/><input value=\"submit\" type=\'button\' onclick=\"submit_input("
             + user_id + ")\">" + 
             "</form><div>user" + user_id + 
             " result: </div><div id=\"d" + user_id + 
@@ -36,19 +40,25 @@
             var text = "<div> input: " + user.password + " output: " + user.result + "</div>";
             return text;
         }
-        var user_input = template(user_id);
-        function add_user() {
-            $('.div1').append(user_input);
-            var user = {
-            uid: user_id,
+        var user_input = template(identifier + user_id);
+        var user = {
+            uid: identifier + user_id,
             password: null,
             result: null,
-            };
+        };
+        // user_list[user_count] = first_user;
+        function add_user() {
+            $('.div1').append(user_input);
             user_list[user_count] = user;
             user_id++;
             user_count++;
-            user_input = template(user_id);
-            console.log(user_list)
+            user = {
+            uid: identifier + user_id,
+            password: null,
+            result: null,
+            };
+            user_input = template(user.uid);
+            console.log(user_list);
         }
 
         function show_result(uid, result) {
@@ -62,7 +72,7 @@
         function submit_input(uid) {
             var input_data = $('#pwd' + uid)
             // console.log(input_data.val());
-            var data = {'uid': identifier + "-" + uid, 'password': input_data.val()}
+            var data = {'uid': uid, 'password': input_data.val()}
             var index = find_user_index(uid);
             user_list[index].password = input_data.val();
             $.ajax({
@@ -72,11 +82,11 @@
                 url: "http://localhost:31000/decode",
                 data: JSON.stringify(data),
                 success: function (result) {
-                    console.log(result);
+                    // console.log(result);
                     show_result(result.uid, result.result);
                 },
                 error: function () {
-                    alert("user" + identifier + "-" + uid + "error");
+                    alert("user" + uid + "error");
                 }
             });
         }
