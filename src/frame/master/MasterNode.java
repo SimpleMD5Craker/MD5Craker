@@ -6,6 +6,7 @@ import frame.common.Node;
 import frame.common.Task;
 import frame.common.Utils;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Comparator;
@@ -45,7 +46,8 @@ public class MasterNode implements Node {
 
     private void addWorkerNumTask(int increment, String worker) {
         Utils.Pair<Integer, Instant> original = workers.get(worker);
-        workers.put(worker, new Utils.Pair<>(original.getV0() + increment, original.getV1()));
+        int newNumRunningTasks = Math.max(original.getV0() + increment, 0);
+        workers.put(worker, new Utils.Pair<>(newNumRunningTasks, original.getV1()));
     }
 
     private void stopTasksAssignedTo(String workerAddr) {
@@ -61,6 +63,7 @@ public class MasterNode implements Node {
         }
         for(Task t: stoppedOnes) {
             runningTasks.remove(t);
+            addWorkerNumTask(-1, workerAddr);
             waitingTasks.offer(t);
         }
     }
@@ -95,8 +98,13 @@ public class MasterNode implements Node {
         runningTasks.get(t).setV1(Instant.now());
     }
 
-    private void finishTask(Task t) {
-        runningTasks.remove(t);
+    private void finishTask(Task t, String worker) {
+        if(runningTasks.containsKey(t)) {
+            if(runningTasks.get(t).getV0().equals(worker)) {
+                addWorkerNumTask(-1, worker);
+            }
+            runningTasks.remove(t);
+        }
         if(t.isResultsFound()) {
             String user = t.getUserUid().split(":")[0];
             MasterQueueManager.getManager().newResult(String.join(":",
@@ -172,7 +180,6 @@ public class MasterNode implements Node {
                             // Though it is heartbeat, but the worker has been removed from the worker list.
                             // Thus, we need to add it back , and remove the running task that has been assigned
                             // to the workers
-                            stopTasksAssignedTo(workerAddr);
                             addNewWorker(workerAddr);
                         } else {
                             // Update last update time of the worker
@@ -180,77 +187,73 @@ public class MasterNode implements Node {
                         }
                     } else {
                         // worker is busy now
-                        if(!workers.containsKey(workerAddr)) {
-                            // We need to add the worker back , and only keep the task currently executed by the worker in the
-                            // runningTasks map, move other running ones that assigned to the worker to the waiting task.
-
+                        if(!workers.containsKey(workerAddr)){
+                            // If the worker lost connection, then add it back
                             addNewWorker(workerAddr);
-                            if(!runningTasks.containsKey(workerTask) && waitingTasks.contains(workerTask)) {
-                                // If the task is now waiting, then we add it to the running task
-                                if(workerTask.isTaskFinished()) {
-                                    finishTask(workerTask);
-                                    waitingTasks.remove(workerTask);
-                                } else {
-                                    stopTasksAssignedTo(workerAddr);
-                                    resurrectTask(workerTask, workerAddr);
-                                    addWorkerNumTask(1, workerAddr);
-                                }
-                            } else if(runningTasks.containsKey(workerTask) && !waitingTasks.contains(workerTask)) {
-                                // The task is still running, but may have been assigned to others, if so, we keep this
-                                // unchanged unless the task has been finished by this task(the owner of the heartbeat)
-                                stopTasksAssignedTo(workerAddr);
-                                if(workerTask.isTaskFinished()) {
-                                    finishTask(workerTask);
-                                } else {
-                                    if(getTaskExecutor(workerTask) == null) {
-                                        // Since we removed all running tasks of the worker, so by this condition we can
-                                        // know that the task was executing by the worker according to the record of the
-                                        // master. Thus add it back.
-                                        resurrectTask(workerTask, workerAddr);
-                                        addWorkerNumTask(1, workerAddr);
-                                    }
-                                }
-                            } else if(runningTasks.containsKey(workerTask) && waitingTasks.contains(workerTask)) {
-                                // Should not reach here, if happens, then we can know that our system is broken.
-                                System.err.printf("One lost task is in both running and waiting queue: %s", workerTask);
-                                System.exit(-1);
-                            }
-
                         } else {
-                            // Update last-update-time of the worker
+                            // Else update last-update-time of the worker
                             workers.get(workerAddr).setV1(Instant.now());
-
-                            if(!runningTasks.containsKey(workerTask) && waitingTasks.contains(workerTask)) {
-                                // If the task is now waiting and not finished by the worker,
-                                // then we add it to the running task
-                                if(workerTask.isTaskFinished()) {
-                                    finishTask(workerTask);
-                                    waitingTasks.remove(workerTask);
-                                } else {
-                                    resurrectTask(workerTask, workerAddr);
-                                    addWorkerNumTask(1, workerAddr);
-                                }
-                            } else if(runningTasks.containsKey(workerTask) && !waitingTasks.contains(workerTask)) {
-                                // The task is still running, but may have been assigned to others, if so, we keep this
-                                // unchanged unless the task has been finished by this task(the owner of the heartbeat)
-                                if(workerTask.isTaskFinished()) {
-                                    finishTask(workerTask);
-                                } else {
-                                    if(getTaskExecutor(workerTask).equals(workerAddr)) {
-                                        // Only when in the master's record that the task was assigned to the worker,
-                                        // then we update the last-heartbeat-time of the task
-                                        updateTask(workerTask);
-                                    }
-                                }
-                            } else if(runningTasks.containsKey(workerTask) && waitingTasks.contains(workerTask)) {
-                                // Should not reach here, if happens, then we can know that our system is broken.
-                                System.err.printf("One lost task is in both running and waiting queue: %s", workerTask);
-                                System.exit(-1);
+                        }
+                        if(!runningTasks.containsKey(workerTask) && waitingTasks.contains(workerTask)) {
+                            if(workerTask.isTaskFinished()) {
+                                finishTask(workerTask, workerAddr);
+                                waitingTasks.remove(workerTask);
+                            } else {
+                                // If the task is now waiting, then we add it to the running task
+                                resurrectTask(workerTask, workerAddr);
+                                addWorkerNumTask(1, workerAddr);
                             }
+                        } else if(runningTasks.containsKey(workerTask) && !waitingTasks.contains(workerTask)) {
+                            // The task is still running, but may have been assigned to others, if so, we keep this
+                            // unchanged unless the task has been finished by this task(the owner of the heartbeat)
+                            if(workerTask.isTaskFinished()) {
+                                if(workerAddr.equals(getTaskExecutor(workerTask))) {
+                                    // Only when in the master's record that the task was assigned to the worker,
+                                    // then we finish the task
+                                    finishTask(workerTask, workerAddr);
+                                }
+                            } else {
+                                if(workerAddr.equals(getTaskExecutor(workerTask))) {
+                                    // Only when in the master's record that the task was assigned to the worker,
+                                    // then we update the last-heartbeat-time of the task
+                                    updateTask(workerTask);
+                                }
+                            }
+                        } else if(runningTasks.containsKey(workerTask) && waitingTasks.contains(workerTask)) {
+                            // Should not reach here, if happens, then we can know that our system is broken.
+                            System.err.printf("One lost task is in both running and waiting queue: %s", workerTask);
+                            System.exit(-1);
                         }
                     }
                 }
             }
+
+            // 3. Check tasks and workers in current record:
+            // 3.1 First check worker
+            HashSet<String> timeoutWorkers = new HashSet<>();
+            HashSet<Task> tasksOfTimeoutWorkers = new HashSet<>();
+            Instant current = Instant.now();
+            for(String worker : workers.keySet()) {
+                Instant lastUpdateTime = workers.get(worker).getV1();
+                if(Duration.between(lastUpdateTime, current).toMillis() > Config.MASTER_WORKER_TIMEOUT) {
+                    // The worker is considered lost connection with the master
+                    timeoutWorkers.add(worker);
+                    for(Task t: runningTasks.keySet()) {
+                        //we also move all tasks assigned to it into waitingTask queue
+                        if(runningTasks.get(t).getV0().equals(worker)){
+                            tasksOfTimeoutWorkers.add(t);
+                        }
+                    }
+                }
+            }
+            for(String timeOutWorker: timeoutWorkers) {
+                workers.remove(timeOutWorker);
+            }
+            for(Task t: tasksOfTimeoutWorkers) {
+                runningTasks.remove(t);
+                waitingTasks.offer(t);
+            }
+            // TODO: 3.2 Check other timeout tasks, may not need this.
 
         }
     }
