@@ -272,4 +272,8 @@ public class MasterNode implements Node {
     public static String getNewResult() {
         return MasterQueueManager.getManager().pollResult();
     }
+
+    public String getSelfAddress() {
+        return communicator.getStrAddress();
+    }
 }

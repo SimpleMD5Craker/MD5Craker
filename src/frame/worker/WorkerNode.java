@@ -21,6 +21,10 @@ public class WorkerNode implements Node {
         return masterAddress;
     }
 
+    String getSelfAddress() {
+        return communicator.getStrAddress();
+    }
+
     @Override
     public void run() {
         Thread con = new Thread(communicator);
