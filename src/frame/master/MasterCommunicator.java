@@ -6,8 +6,10 @@ import frame.common.Message;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 
 
@@ -20,17 +22,27 @@ import java.nio.charset.StandardCharsets;
 public class MasterCommunicator implements Runnable{
     private DatagramSocket masterSocket;
 
+    /* address used by the master, since the machine may have multiple NIC, manager of the master should choose one*/
+    private final String ipAddr;
 
-    public MasterCommunicator() {
+    private int usedPort;
+
+
+    public MasterCommunicator(String ipAddr) {
+        this.ipAddr = ipAddr;
         try{
-            this.masterSocket = new DatagramSocket(Config.MASTER_PORT_NUMBER);
+            this.masterSocket = new DatagramSocket(null);
+            this.masterSocket.bind(new InetSocketAddress(ipAddr, Config.MASTER_PORT_NUMBER));
             this.masterSocket.setSoTimeout(Config.MASTER_RECEIVE_WAIT_TIMEOUT);
+            usedPort = Config.MASTER_PORT_NUMBER;
         } catch (SocketException e) {
             System.err.printf("Failed to create socket for master: %s. Try to create it with the secondary port %d",
                     e.getMessage(), Config.MASTER_SECONDARY_PORT_NUMBER);
             try{
-                this.masterSocket = new DatagramSocket(Config.MASTER_SECONDARY_PORT_NUMBER);
+                this.masterSocket = new DatagramSocket(null);
+                this.masterSocket.bind(new InetSocketAddress(ipAddr, Config.MASTER_SECONDARY_PORT_NUMBER));
                 this.masterSocket.setSoTimeout(Config.MASTER_RECEIVE_WAIT_TIMEOUT);
+                usedPort = Config.MASTER_SECONDARY_PORT_NUMBER;
             } catch (SocketException ee){
                 System.err.printf("Failed to create socket for master: %s. End the process.",
                         ee.getMessage());
@@ -52,19 +64,33 @@ public class MasterCommunicator implements Runnable{
                 if(m != null) {
                     MasterQueueManager.getManager().newReceived(m);
                 }
-                m = MasterQueueManager.getManager().pollSending();
-                if(m != null) {
-                    if(m.getAddress() != null && !m.getAddress().equals("empty")) {
-                        String[] strAddress = m.getAddress().split(":");
-                        InetSocketAddress address = new InetSocketAddress(strAddress[0], Integer.parseInt(strAddress[1]));
-                        byte[] sendingData = m.toString().getBytes(StandardCharsets.UTF_8);
-                        DatagramPacket sending = new DatagramPacket(sendingData, sendingData.length, address);
-                        masterSocket.send(sending);
+            } catch (SocketTimeoutException e) {
+                System.out.println(e.getMessage());
+            } catch (IOException e) {
+                System.err.printf("Master failed to receive message: %s", e.getMessage());
+                System.exit(-1);
+            }
+            try {
+                for (int i = 0; i < Config.MASTER_MAXIMUM_SENDING_NUM_PER_ROUND; i++) {
+                    Message m = MasterQueueManager.getManager().pollSending();
+                    if (m != null) {
+                        if (m.getTargetAddress() != null && !m.getTargetAddress().equals("empty")) {
+                            String[] strAddress = m.getTargetAddress().split(":");
+                            InetSocketAddress address = new InetSocketAddress(strAddress[0], Integer.parseInt(strAddress[1]));
+                            byte[] sendingData = m.toString().getBytes(StandardCharsets.UTF_8);
+                            DatagramPacket sending = new DatagramPacket(sendingData, sendingData.length, address);
+                            masterSocket.send(sending);
+                        }
                     }
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch(IOException e){
+                System.err.printf("Master failed to send message: %s", e.getMessage());
+                System.exit(-1);
             }
         }
+    }
+
+    public String getStrAddress() {
+        return ipAddr + ":" + Integer.toString(usedPort);
     }
 }

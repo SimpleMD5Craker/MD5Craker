@@ -31,14 +31,21 @@ public class MasterNode implements Node {
      task assigned to the worker and last update time of the worker */
     private HashMap<String, Utils.Pair<Integer, Instant>> workers;
 
+    /* address used by the master, since the machine may have multiple NIC, manager of the master should choose one*/
 
-    public MasterNode() {
+    private final MasterCommunicator communicator;
+
+
+
+    public MasterNode(String selfIP) {
         waitedUsers = new LinkedList<>();
         runningUsers = new LinkedList<>();
         runningTasks = new HashMap<>();
         waitingTasks = new LinkedList<>();
         workers = new HashMap<>();
+        communicator = new MasterCommunicator(selfIP);
     }
+
 
     private String getWorkerWithMinimumTask() {
         return Collections.min(workers.entrySet(), Comparator.comparingInt(entry -> entry.getValue().getV0())).getKey();
@@ -120,7 +127,7 @@ public class MasterNode implements Node {
 
     @Override
     public void run() {
-        Thread con = new Thread(new MasterCommunicator());
+        Thread con = new Thread(communicator);
         con.start();
         while(true) {
             // 1. Begin to dispatch new task, first check whether there are workers, then check whether there is new
@@ -138,13 +145,13 @@ public class MasterNode implements Node {
                         Task t2 = new Task(userUid, "bbbbc:ccccc");
                         String assignedWorker = getWorkerWithMinimumTask();
                         MasterQueueManager.getManager().newSending(new Message(Message.Type.ASSIGNMENT, t1,
-                                assignedWorker));
+                                assignedWorker, communicator.getStrAddress()));
                         runningTasks.put(t1, new Utils.Pair<>(assignedWorker, Instant.now()));
                         addWorkerNumTask(1, assignedWorker);
 
                         assignedWorker = getWorkerWithMinimumTask();
                         MasterQueueManager.getManager().newSending(new Message(Message.Type.ASSIGNMENT, t2,
-                                assignedWorker));
+                                assignedWorker, communicator.getStrAddress()));
                         runningTasks.put(t2, new Utils.Pair<>(assignedWorker, Instant.now()));
                         addWorkerNumTask(1, assignedWorker);
                     }
@@ -167,12 +174,12 @@ public class MasterNode implements Node {
                 }
                 Message.Type taskType = rcv.getType();
                 if(taskType == Message.Type.REGISTER) {
-                    String workerAddr = rcv.getAddress();
+                    String workerAddr = rcv.getSrcAddress();
                     if(!workers.containsKey(workerAddr)) {
                         addNewWorker(workerAddr);
                     }
                 } else if(taskType == Message.Type.HEARTBEAT) {
-                    String workerAddr = rcv.getAddress();
+                    String workerAddr = rcv.getSrcAddress();
                     Task workerTask = rcv.getTask();
                     if(workerTask == null) {
                         // worker is idle now

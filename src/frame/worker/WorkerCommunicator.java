@@ -8,28 +8,42 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 
 public class WorkerCommunicator implements Runnable{
     private DatagramSocket workerSocket;
 
+    private String ipAddr;
 
-    public WorkerCommunicator() {
+    private int usedPort;
+
+
+    public WorkerCommunicator(String ipAddr) {
+        this.ipAddr = ipAddr;
         try{
-            this.workerSocket = new DatagramSocket(Config.WORKER_PORT_NUMBER);
+            this.workerSocket = new DatagramSocket(null);
+            this.workerSocket.bind(new InetSocketAddress(ipAddr, Config.WORKER_PORT_NUMBER));
             this.workerSocket.setSoTimeout(Config.WORKER_RECEIVE_WAIT_TIMEOUT);
+            usedPort = Config.WORKER_PORT_NUMBER;
         } catch (SocketException e) {
             System.err.printf("Failed to create socket for worker: %s. Try to create it with the secondary port %d",
                     e.getMessage(), Config.WORKER_SECONDARY_PORT_NUMBER);
             try{
-                this.workerSocket = new DatagramSocket(Config.WORKER_SECONDARY_PORT_NUMBER);
+                this.workerSocket = new DatagramSocket(null);
+                this.workerSocket.bind(new InetSocketAddress(ipAddr, Config.WORKER_SECONDARY_PORT_NUMBER));
                 this.workerSocket.setSoTimeout(Config.WORKER_RECEIVE_WAIT_TIMEOUT);
+                usedPort = Config.WORKER_SECONDARY_PORT_NUMBER;
             } catch (SocketException ee){
                 System.err.printf("Failed to create socket for master: %s. End the process.",
                         ee.getMessage());
                 System.exit(-1);
             }
         }
+    }
+
+    public String getStrAddress() {
+        return ipAddr + ":" + Integer.toString(usedPort);
     }
 
     @Override
@@ -45,19 +59,30 @@ public class WorkerCommunicator implements Runnable{
                 if(m != null) {
                     WorkerQueueManager.getManager().newReceived(m);
                 }
-                m = WorkerQueueManager.getManager().pollSending();
-                if(m != null) {
-                    if(m.getAddress() != null && !m.getAddress().equals("empty")) {
-                        String[] strAddress = m.getAddress().split(":");
-                        InetSocketAddress address = new InetSocketAddress(strAddress[0], Integer.parseInt(strAddress[1]));
-                        byte[] sendingData = m.toString().getBytes(StandardCharsets.UTF_8);
-                        DatagramPacket sending = new DatagramPacket(sendingData, sendingData.length, address);
-                        workerSocket.send(sending);
+            } catch (SocketTimeoutException e) {
+                System.out.println(e.getMessage());
+            } catch (IOException e) {
+                System.err.printf("Worker failed to receive message: %s", e.getMessage());
+                System.exit(-1);
+            }
+            try {
+                for (int i = 0; i < Config.WORKER_MAXIMUM_SENDING_NUM_PER_ROUND; i++) {
+                    Message m = WorkerQueueManager.getManager().pollSending();
+                    if (m != null) {
+                        if (m.getTargetAddress() != null && !m.getTargetAddress().equals("empty")) {
+                            String[] strAddress = m.getTargetAddress().split(":");
+                            InetSocketAddress address = new InetSocketAddress(strAddress[0], Integer.parseInt(strAddress[1]));
+                            byte[] sendingData = m.toString().getBytes(StandardCharsets.UTF_8);
+                            DatagramPacket sending = new DatagramPacket(sendingData, sendingData.length, address);
+                            workerSocket.send(sending);
+                        }
                     }
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                System.err.printf("Worker failed to send message: %s", e.getMessage());
+                System.exit(-1);
             }
+
         }
     }
 }

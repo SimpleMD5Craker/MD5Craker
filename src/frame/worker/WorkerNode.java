@@ -1,27 +1,54 @@
 package frame.worker;
 
+import frame.common.Config;
 import frame.common.Message;
 import frame.common.Node;
 import frame.common.Task;
 
 public class WorkerNode implements Node {
-    WorkerCommunicator communicator;
+    private final WorkerCommunicator communicator;
 
-    public WorkerNode(){
-        communicator = new WorkerCommunicator();
+    /* IP:Port address of master */
+    private final String masterAddress;
+
+
+    public WorkerNode(String masterAddr, String selfAddress){
+        communicator = new WorkerCommunicator(selfAddress);
+        masterAddress = masterAddr;
+    }
+
+    String getMasterAddress() {
+        return masterAddress;
     }
 
     @Override
     public void run() {
-        Thread con = new Thread(new WorkerCommunicator());
+        Thread con = new Thread(communicator);
         con.start();
-
+        // Send register request
+        Message register = new Message(Message.Type.REGISTER, null, masterAddress, communicator.getStrAddress());
+        WorkerQueueManager.getManager().newSending(register);
         // TODO: Start Cracker here
         while(true) {
-            // 1. Check whether there are new task in the received queue
-            while(true) {
-                Message m = WorkerQueueManager.getManager().pollReceived();
+            try{
+                Thread.sleep(Config.WORKER_SLEEP_INTERVAL);
+            } catch (InterruptedException e) {
+                System.err.printf("Worker failed to sleep!");
+                System.exit(-1);
             }
+            // 1. Check received messages, put tasks into taskQueue
+            for(int i = 0; i < Config.WORKER_MAXIMUM_CHECK_RECEIVED_NUM; i++) {
+                Message m = WorkerQueueManager.getManager().pollReceived();
+                if(m == null) {
+                    break;
+                } else {
+                    if(m.getType() == Message.Type.ASSIGNMENT) {
+                        WorkerQueueManager.getManager().newTask(m.getTask());
+                    }
+                }
+            }
+
+            // 2. Send heartbeat to master
         }
     }
 

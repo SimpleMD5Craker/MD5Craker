@@ -1,11 +1,5 @@
 package frame.common;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-
 public class Message {
     public enum Type{
         /* send by worker, tell the master it can work for the master now.*/
@@ -52,16 +46,25 @@ public class Message {
 
 
     /**
-     * 1. REGISTER: "IP:port" of the worker
-     * 2. HEARTBEAT: "IP:port" of the worker
+     * 1. REGISTER: "IP:port" of the master
+     * 2. HEARTBEAT: "IP:port" of the master
      * 3. ASSIGNMENT: "IP:port" of the worker that assigned by the master
      * */
-    private String address;
+    private String targetAddress;
 
-    public Message(Type type, Task task, String address) {
+    /**
+     * 1. REGISTER: "IP:port" of the worker
+     * 2. HEARTBEAT: "IP:port" of the worker
+     * 3. ASSIGNMENT: "IP:port" of the master
+     * */
+
+    private String srcAddress;
+
+    public Message(Type type, Task task, String tgt, String src) {
         this.type = type;
         this.task = task;
-        this.address = address;
+        this.targetAddress = tgt;
+        this.srcAddress = src;
     }
 
     public Type getType() {
@@ -73,8 +76,12 @@ public class Message {
     }
 
 
-    public String getAddress() {
-        return address;
+    public String getTargetAddress() {
+        return targetAddress;
+    }
+
+    public String getSrcAddress() {
+        return srcAddress;
     }
 
     public String toString() {
@@ -84,11 +91,15 @@ public class Message {
         } else {
             strTask = task.toString();
         }
-        String revisedAddress = address;
-        if(address == null) {
-            revisedAddress = "empty";
+        String tgtAddr = targetAddress;
+        if(targetAddress == null) {
+            tgtAddr = "empty";
         }
-        return String.join("$", type.toString(), strTask, revisedAddress);
+        String srcAddr = srcAddress;
+        if(srcAddr == null) {
+            srcAddr = "empty";
+        }
+        return String.join("$", type.toString(), strTask, tgtAddr, srcAddr);
     }
 
     public static Message parseString(String strMessage) {
@@ -106,7 +117,7 @@ public class Message {
         } else {
             task = Task.parseString(segments[1]);
         }
-        return new Message(type, task, segments[2]);
+        return new Message(type, task, segments[2], segments[3]);
     }
 
 }
