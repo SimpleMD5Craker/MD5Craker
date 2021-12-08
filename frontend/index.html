@@ -38,7 +38,7 @@
         }
         function result_template(user, response_time) {
             var text = "<div> input: " + user.password + " output: " + user.result + "</div><div>response time: "
-                + response_time + " ms</div>";
+                + response_time + " s</div>";
             return text;
         }
         var user_input = template(identifier + user_id);
@@ -76,7 +76,7 @@
             var data = {'uid': uid, 'password': input_data.val()}
             var index = find_user_index(uid);
             user_list[index].password = input_data.val();
-            var start = new Date().getTime();
+            // var start = new Date().getTime();
             $.ajax({
                 type: "POST",
                 contentType: 'application/json',
@@ -85,8 +85,8 @@
                 data: JSON.stringify(data),
                 success: function (result) {
                     // console.log(result);
-                    var end = new Date().getTime();
-                    show_result(result.uid, result.result, end - start);
+                    // var end = new Date().getTime();
+                    show_result(result.uid, result.result, result.time);
                 },
                 error: function () {
                     alert("user" + uid + "error");

@@ -21,13 +21,15 @@ def decode():
         print(request.json)
         uid = request.json['uid']
         password = request.json['password']
+    start = time.time()
     message = "{}:{}\n".format(uid, password)
     s.send(message.encode("utf-8"))
     print("send: {}".format(message))
     recv_msg, _ = s.recvfrom(2048)
     recv_msg = recv_msg.decode()
     code = recv_msg.strip().split(':')[-1]
-    res = {"uid":uid, "result":code}
+    end = time.time()
+    res = {"uid":uid, "result":code, "time": end - start}
     print(res)
     return res
     
