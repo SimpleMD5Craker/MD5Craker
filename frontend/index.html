@@ -36,8 +36,9 @@
             "\"></div></div>";
             return text;
         }
-        function result_template(user) {
-            var text = "<div> input: " + user.password + " output: " + user.result + "</div>";
+        function result_template(user, response_time) {
+            var text = "<div> input: " + user.password + " output: " + user.result + "</div><div>response time: "
+                + response_time + " ms</div>";
             return text;
         }
         var user_input = template(identifier + user_id);
@@ -61,11 +62,11 @@
             console.log(user_list);
         }
 
-        function show_result(uid, result) {
+        function show_result(uid, result, response_time) {
             var res_tab = $('#d' + uid);
             var index = find_user_index(uid);
             user_list[index].result = result;
-            result_text = result_template(user_list[index]);
+            result_text = result_template(user_list[index], response_time);
             res_tab.append(result_text);
         }
 
@@ -75,15 +76,17 @@
             var data = {'uid': uid, 'password': input_data.val()}
             var index = find_user_index(uid);
             user_list[index].password = input_data.val();
+            var start = new Date().getTime();
             $.ajax({
                 type: "POST",
                 contentType: 'application/json',
                 dataType: "json",
-                url: "http://localhost:31000/decode",
+                url: "http://204.102.244.50:31000/decode",
                 data: JSON.stringify(data),
                 success: function (result) {
                     // console.log(result);
-                    show_result(result.uid, result.result);
+                    var end = new Date().getTime();
+                    show_result(result.uid, result.result, end - start);
                 },
                 error: function () {
                     alert("user" + uid + "error");
