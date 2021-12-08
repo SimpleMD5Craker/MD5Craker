@@ -40,4 +40,6 @@ public class Config {
 
     /* The maximum number of messages that can be sent by the worker communicator per round */
     public static int WORKER_MAXIMUM_SENDING_NUM_PER_ROUND = 10;
+
+    public static int SERVER_PORT_NUMBER = 9000;
 }

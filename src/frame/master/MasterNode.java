@@ -13,7 +13,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.Random;
 
 public class MasterNode implements Node {
 
@@ -131,7 +130,7 @@ public class MasterNode implements Node {
     @Override
     public void run() {
         Thread con = new Thread(communicator);
-        Thread in = new Thread(new SimpleInputer());
+        Thread in = new Thread(new Server());
         con.start();
         in.start();
         while(true) {
