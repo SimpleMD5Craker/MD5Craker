@@ -114,12 +114,12 @@ public class MasterNode implements Node {
             runningTasks.remove(t);
         }
         if(t.isResultsFound()) {
-            String user = t.getUserUid().split(":")[0];
+            System.out.printf("Worker %s find answer \"%s\" for user:%s\n", worker, t.getResult(),
+                    t.getUserUid().split(":")[0]);
+            String user = t.getUserUid();
             MasterQueueManager.getManager().newResult(String.join(":",
                     user, t.getResult()));
             userFinished(user);
-            System.out.printf("Worker %s find answer \"%s\" for user:%s", worker, t.getResult(),
-                    t.getUserUid().split(":")[0]);
         }
     }
 
@@ -131,7 +131,9 @@ public class MasterNode implements Node {
     @Override
     public void run() {
         Thread con = new Thread(communicator);
+        Thread in = new Thread(new SimpleInputer());
         con.start();
+        in.start();
         while(true) {
             // 1. Begin to dispatch new task, first check whether there are workers, then check whether there is new
             //coming request
@@ -164,18 +166,6 @@ public class MasterNode implements Node {
                         if(userUid == null) {
                             break;
                         }
-                    }
-                } else {
-                    // TODO: The code segment below is just for test purpose
-                    for(int i = 0; i < 3; i++){
-                        Random r = new Random();
-                        String input = Integer.toString(r.nextInt(1000));
-                        String userId = r.ints(97, 122 + 1)
-                                .limit(4)
-                                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
-                                .toString();
-                        MasterQueueManager.getManager().newUser(userId + ":" + input);
-                        System.out.printf("User:%s\nInput:%s\n", userId, input);
                     }
                 }
             }

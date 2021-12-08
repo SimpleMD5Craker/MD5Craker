@@ -7,7 +7,7 @@ public class StartUp {
     public static void main(String[] args) {
         if (args.length != 2 && args.length != 3) {
             System.err.println("Invalid input format! The valid input should be: \"[master] [master ip address]\" or " +
-                    "\"[worker] [worker ip address] [master ip address]\"");
+                    "\"[worker] [worker ip address] [master ip:port]\"");
             System.exit(-1);
         }
         String nodeType = args[0];
@@ -19,11 +19,11 @@ public class StartUp {
         } else if ("worker".equalsIgnoreCase(nodeType)) {
             String nodeIP = args[1];
             String masterIp = args[2];
-            node = new WorkerNode(nodeIP, masterIp);
+            node = new WorkerNode(masterIp, nodeIP);
             node.run();
         } else {
             System.err.println("Invalid input format! The valid input should be: \"[master] [master ip address]\" or " +
-                    "\"[worker] [worker ip address] [master ip address]\"");
+                    "\"[worker] [worker ip address] [master ip:port]\"");
             System.exit(-1);
         }
     }

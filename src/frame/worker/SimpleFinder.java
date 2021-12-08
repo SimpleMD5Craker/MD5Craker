@@ -20,7 +20,7 @@ public class SimpleFinder implements Runnable{
                     int input = Integer.parseInt(t.getUserUid().split(":")[1]);
                     String[] range = t.getRange().split(":");
                     int low = Integer.parseInt(range[0]);
-                    int up = Integer.parseInt(range[0]);
+                    int up = Integer.parseInt(range[1]);
                     boolean found = false;
                     for (int i = low; i <= up; i++) {
                         if (i == input) {

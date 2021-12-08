@@ -32,7 +32,7 @@ public class Config {
 
     public static int WORKER_SECONDARY_PORT_NUMBER = 42531;
 
-    public static int WORKER_RECEIVE_WAIT_TIMEOUT = 00; //ms, the wait time for WorkerCommunicator to receive datagrams.
+    public static int WORKER_RECEIVE_WAIT_TIMEOUT = 100; //ms, the wait time for WorkerCommunicator to receive datagrams.
 
     public static int WORKER_MAXIMUM_RECEIVE_DATA_SIZE = 512; // in bytes
 
