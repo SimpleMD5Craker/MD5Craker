@@ -169,7 +169,6 @@ public class MasterNode implements Node {
                     }
                 }
             }
-            System.out.println("Master Sleep");
             try{
                 Thread.sleep(Config.MASTER_SLEEP_INTERVAL);
             } catch (InterruptedException e) {

@@ -57,15 +57,17 @@ public class MasterCommunicator implements Runnable{
         System.out.println("Master communicator start!");
         while(true) {
             try {
-                byte[] data = new byte[Config.MASTER_MAXIMUM_RECEIVE_DATA_SIZE];
-                DatagramPacket received = new DatagramPacket(data, data.length);
-                masterSocket.receive(received);
-                String strMessage = new String(received.getData(), received.getOffset(), received.getLength(),
-                        StandardCharsets.UTF_8);
-                Message m = Message.parseString(strMessage);
-                System.out.printf("Master received message: %s\n", m);
-                if(m != null) {
-                    MasterQueueManager.getManager().newReceived(m);
+                for(int i = 0; i < Config.MASTER_MAXIMUM_CHECK_RECEIVED_NUM * 2; i++) {
+                    byte[] data = new byte[Config.MASTER_MAXIMUM_RECEIVE_DATA_SIZE];
+                    DatagramPacket received = new DatagramPacket(data, data.length);
+                    masterSocket.receive(received);
+                    String strMessage = new String(received.getData(), received.getOffset(), received.getLength(),
+                            StandardCharsets.UTF_8);
+                    Message m = Message.parseString(strMessage);
+                    System.out.printf("Master received message: %s\n", m);
+                    if (m != null) {
+                        MasterQueueManager.getManager().newReceived(m);
+                    }
                 }
             } catch (SocketTimeoutException e) {
                 System.out.println(e.getMessage());

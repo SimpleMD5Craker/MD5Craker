@@ -1,4 +1,3 @@
-import com.sun.corba.se.spi.orbutil.threadpool.Work;
 import frame.common.Node;
 import frame.master.MasterNode;
 import frame.worker.WorkerNode;

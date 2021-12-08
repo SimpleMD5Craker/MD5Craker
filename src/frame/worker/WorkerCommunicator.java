@@ -51,14 +51,16 @@ public class WorkerCommunicator implements Runnable{
         System.out.println("Worker Communicator Start!");
         while(true) {
             try {
-                byte[] data = new byte[Config.WORKER_MAXIMUM_RECEIVE_DATA_SIZE];
-                DatagramPacket received = new DatagramPacket(data, data.length);
-                workerSocket.receive(received);
-                String strMessage = new String(received.getData(), received.getOffset(), received.getLength(),
-                        StandardCharsets.UTF_8);
-                Message m = Message.parseString(strMessage);
-                if(m != null) {
-                    WorkerQueueManager.getManager().newReceived(m);
+                for(int i = 0; i < Config.WORKER_MAXIMUM_CHECK_RECEIVED_NUM*2; i++) {
+                    byte[] data = new byte[Config.WORKER_MAXIMUM_RECEIVE_DATA_SIZE];
+                    DatagramPacket received = new DatagramPacket(data, data.length);
+                    workerSocket.receive(received);
+                    String strMessage = new String(received.getData(), received.getOffset(), received.getLength(),
+                            StandardCharsets.UTF_8);
+                    Message m = Message.parseString(strMessage);
+                    if (m != null) {
+                        WorkerQueueManager.getManager().newReceived(m);
+                    }
                 }
             } catch (SocketTimeoutException e) {
                 System.out.println(e.getMessage());
@@ -67,7 +69,6 @@ public class WorkerCommunicator implements Runnable{
                 System.exit(-1);
             }
 
-            System.out.println("Worker communicator sleep");
             try{
                 Thread.sleep(Config.WORKER_SLEEP_INTERVAL);
             } catch (InterruptedException e) {

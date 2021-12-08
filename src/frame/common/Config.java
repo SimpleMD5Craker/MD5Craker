@@ -15,18 +15,18 @@ public class Config {
     /* The maximum number of messages that can be sent by the master communicator per round */
     public static int MASTER_MAXIMUM_SENDING_NUM_PER_ROUND = 20;
 
-    public static long MASTER_SLEEP_INTERVAL = 100; // ms
+    public static long MASTER_SLEEP_INTERVAL = 200; // ms
 
     /* The maximum number of users that can be added to running users queue per round */
     public static int MASTER_MAXIMUM_ADDED_USER_PER_ROUND = 5;
 
     public static long MASTER_TASK_TIMEOUT = 1000; // ms
 
-    public static long MASTER_WORKER_TIMEOUT = 1000; // ms
+    public static long MASTER_WORKER_TIMEOUT = 5000; // ms
 
     public static int MAXIMUM_PASSWORD_LENGTH = 5;
 
-    public static long WORKER_SLEEP_INTERVAL = 150;
+    public static long WORKER_SLEEP_INTERVAL = 500;
 
     public static int WORKER_PORT_NUMBER = 54321;
 
