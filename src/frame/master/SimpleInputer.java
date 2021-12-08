@@ -9,7 +9,7 @@ public class SimpleInputer implements Runnable{
     public void run() {
         while(true) {
             Scanner input = new Scanner(System.in);
-            int in = input.nextInt();
+            String in = input.next();
             Random r = new Random();
             String userId = r.ints(97, 122 + 1)
                     .limit(4)

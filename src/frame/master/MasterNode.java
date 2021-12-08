@@ -148,19 +148,31 @@ public class MasterNode implements Node {
                         if(idAndInput.length == 2) {
                             // only when the format of the userUid is correct(userID:Input) we process the request
                             // TODO: implement the real task partition logic, now we use the hardcoded implementation for test
-                            Task t1 = new Task(userUid, "1:500");
-                            Task t2 = new Task(userUid, "501:1000");
-                            String assignedWorker = getWorkerWithMinimumTask();
-                            MasterQueueManager.getManager().newSending(new Message(Message.Type.ASSIGNMENT, t1,
-                                    assignedWorker, communicator.getStrAddress()));
-                            runningTasks.put(t1, new Utils.Pair<>(assignedWorker, Instant.now()));
-                            addWorkerNumTask(1, assignedWorker);
+                            int start = 0;
+                            while(start < Math.pow(26,5)){
+                                int end = start + 99999;
+                                Task t = new Task(userUid, start+":"+end);
+                                start+=100000;
+                                String assignedWorker = getWorkerWithMinimumTask();
+                                MasterQueueManager.getManager().newSending(new Message(Message.Type.ASSIGNMENT, t,
+                                        assignedWorker, communicator.getStrAddress()));
+                                runningTasks.put(t, new Utils.Pair<>(assignedWorker, Instant.now()));
+                                addWorkerNumTask(1, assignedWorker);
+                            }
 
-                            assignedWorker = getWorkerWithMinimumTask();
-                            MasterQueueManager.getManager().newSending(new Message(Message.Type.ASSIGNMENT, t2,
-                                    assignedWorker, communicator.getStrAddress()));
-                            runningTasks.put(t2, new Utils.Pair<>(assignedWorker, Instant.now()));
-                            addWorkerNumTask(1, assignedWorker);
+//                            Task t1 = new Task(userUid, "1:500");
+//                            Task t2 = new Task(userUid, "501:1000");
+//                            String assignedWorker = getWorkerWithMinimumTask();
+//                            MasterQueueManager.getManager().newSending(new Message(Message.Type.ASSIGNMENT, t1,
+//                                    assignedWorker, communicator.getStrAddress()));
+//                            runningTasks.put(t1, new Utils.Pair<>(assignedWorker, Instant.now()));
+//                            addWorkerNumTask(1, assignedWorker);
+//
+//                            assignedWorker = getWorkerWithMinimumTask();
+//                            MasterQueueManager.getManager().newSending(new Message(Message.Type.ASSIGNMENT, t2,
+//                                    assignedWorker, communicator.getStrAddress()));
+//                            runningTasks.put(t2, new Utils.Pair<>(assignedWorker, Instant.now()));
+//                            addWorkerNumTask(1, assignedWorker);
                         }
                         userUid = MasterQueueManager.getManager().pollUser();
                         if(userUid == null) {

@@ -81,7 +81,7 @@ public class WorkerCommunicator implements Runnable{
                     Message m = WorkerQueueManager.getManager().pollSending();
                     if (m != null) {
                         if (m.getTargetAddress() != null && !m.getTargetAddress().equals("empty")) {
-                            System.out.printf("Worker communicator send message %s\n", m);
+//                            System.out.printf("Worker communicator send message %s\n", m);
                             String[] strAddress = m.getTargetAddress().split(":");
                             InetSocketAddress address = new InetSocketAddress(strAddress[0], Integer.parseInt(strAddress[1]));
                             byte[] sendingData = m.toString().getBytes(StandardCharsets.UTF_8);

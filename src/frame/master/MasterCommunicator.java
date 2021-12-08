@@ -64,13 +64,13 @@ public class MasterCommunicator implements Runnable{
                     String strMessage = new String(received.getData(), received.getOffset(), received.getLength(),
                             StandardCharsets.UTF_8);
                     Message m = Message.parseString(strMessage);
-                    System.out.printf("Master received message: %s\n", m);
+//                    System.out.printf("Master received message: %s\n", m);
                     if (m != null) {
                         MasterQueueManager.getManager().newReceived(m);
                     }
                 }
             } catch (SocketTimeoutException e) {
-                System.out.println(e.getMessage());
+//                System.out.println(e.getMessage());
             } catch (IOException e) {
                 System.err.printf("Master failed to receive message: %s", e.getMessage());
                 System.exit(-1);
@@ -88,7 +88,7 @@ public class MasterCommunicator implements Runnable{
                     Message m = MasterQueueManager.getManager().pollSending();
                     if (m != null) {
                         if (m.getTargetAddress() != null && !m.getTargetAddress().equals("empty")) {
-                            System.out.printf("Master communicator send message %s\n", m);
+//                            System.out.printf("Master communicator send message %s\n", m);
                             String[] strAddress = m.getTargetAddress().split(":");
                             InetSocketAddress address = new InetSocketAddress(strAddress[0], Integer.parseInt(strAddress[1]));
                             byte[] sendingData = m.toString().getBytes(StandardCharsets.UTF_8);

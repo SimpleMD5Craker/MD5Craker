@@ -11,13 +11,13 @@ public class WorkerNode implements Node {
     /* IP:Port address of master */
     private final String masterAddress;
 
-    private final SimpleFinder finder;
+    private final Cracker finder;
 
 
     public WorkerNode(String masterAddr, String selfAddress){
         communicator = new WorkerCommunicator(selfAddress);
         masterAddress = masterAddr;
-        finder = new SimpleFinder(this);
+        finder = new Cracker(this);
     }
 
     String getMasterAddress() {
