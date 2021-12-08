@@ -42,14 +42,12 @@ public class Server implements Runnable{
                     } catch (IOException e) {
                         System.exit(-1);
                     }
-//                    String result = MasterNode.getNewResult();
-                    String result = "results";
-                    socketSender.println(result);
-//                    while(result != null) {
-//                        socketSender.println(result);
-//                        result = MasterNode.getNewResult();
-//                    }
-                    Thread.sleep(1000);
+                    String result = MasterNode.getNewResult();
+                    while(result != null) {
+                        socketSender.println(result);
+                        result = MasterNode.getNewResult();
+                    }
+                    Thread.sleep(500);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
