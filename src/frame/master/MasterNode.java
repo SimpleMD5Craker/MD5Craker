@@ -159,20 +159,6 @@ public class MasterNode implements Node {
                                 runningTasks.put(t, new Utils.Pair<>(assignedWorker, Instant.now()));
                                 addWorkerNumTask(1, assignedWorker);
                             }
-
-//                            Task t1 = new Task(userUid, "1:500");
-//                            Task t2 = new Task(userUid, "501:1000");
-//                            String assignedWorker = getWorkerWithMinimumTask();
-//                            MasterQueueManager.getManager().newSending(new Message(Message.Type.ASSIGNMENT, t1,
-//                                    assignedWorker, communicator.getStrAddress()));
-//                            runningTasks.put(t1, new Utils.Pair<>(assignedWorker, Instant.now()));
-//                            addWorkerNumTask(1, assignedWorker);
-//
-//                            assignedWorker = getWorkerWithMinimumTask();
-//                            MasterQueueManager.getManager().newSending(new Message(Message.Type.ASSIGNMENT, t2,
-//                                    assignedWorker, communicator.getStrAddress()));
-//                            runningTasks.put(t2, new Utils.Pair<>(assignedWorker, Instant.now()));
-//                            addWorkerNumTask(1, assignedWorker);
                         }
                         userUid = MasterQueueManager.getManager().pollUser();
                         if(userUid == null) {
@@ -283,7 +269,31 @@ public class MasterNode implements Node {
                 runningTasks.remove(t);
                 waitingTasks.offer(t);
             }
-            // TODO: 3.2 Check other timeout tasks, may not need this.
+
+            // 3.2 Check other timeout tasks
+            HashSet<Task> timeoutTasks = new HashSet<>();
+            for(Task t: runningTasks.keySet()) {
+                Instant now = Instant.now();
+                if(Duration.between(runningTasks.get(t).getV1(), now).toMillis() > Config.MASTER_TASK_TIMEOUT) {
+                    timeoutTasks.add(t);
+                }
+            }
+            for(Task t: timeoutTasks) {
+                stopTask(t);
+            }
+
+            // 4. Redispatch the tasks in the waited queue
+            if(workers.size() > 0){
+                HashSet<Task> resurrectTasks = new HashSet<>(waitingTasks);
+                for(Task t: resurrectTasks) {
+                    String assignedWorker = getWorkerWithMinimumTask();
+                    MasterQueueManager.getManager().newSending(new Message(Message.Type.ASSIGNMENT, t,
+                            assignedWorker, communicator.getStrAddress()));
+                    runningTasks.put(t, new Utils.Pair<>(assignedWorker, Instant.now()));
+                    waitingTasks.remove(t);
+                    addWorkerNumTask(1, assignedWorker);
+                }
+            }
 
         }
     }
