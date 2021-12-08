@@ -154,9 +154,9 @@ public class MasterNode implements Node {
                                 Task t = new Task(userUid, start+":"+end);
                                 start+=100000;
                                 String assignedWorker = getWorkerWithMinimumTask();
+                                runningTasks.put(t, new Utils.Pair<>(assignedWorker, Instant.now()));
                                 MasterQueueManager.getManager().newSending(new Message(Message.Type.ASSIGNMENT, t,
                                         assignedWorker, communicator.getStrAddress()));
-                                runningTasks.put(t, new Utils.Pair<>(assignedWorker, Instant.now()));
                                 addWorkerNumTask(1, assignedWorker);
                             }
                         }
@@ -287,10 +287,10 @@ public class MasterNode implements Node {
                 HashSet<Task> resurrectTasks = new HashSet<>(waitingTasks);
                 for(Task t: resurrectTasks) {
                     String assignedWorker = getWorkerWithMinimumTask();
-                    MasterQueueManager.getManager().newSending(new Message(Message.Type.ASSIGNMENT, t,
-                            assignedWorker, communicator.getStrAddress()));
                     runningTasks.put(t, new Utils.Pair<>(assignedWorker, Instant.now()));
                     waitingTasks.remove(t);
+                    MasterQueueManager.getManager().newSending(new Message(Message.Type.ASSIGNMENT, t,
+                            assignedWorker, communicator.getStrAddress()));
                     addWorkerNumTask(1, assignedWorker);
                 }
             }
