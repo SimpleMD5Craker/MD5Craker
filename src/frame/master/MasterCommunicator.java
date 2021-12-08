@@ -31,17 +31,18 @@ public class MasterCommunicator implements Runnable{
     public MasterCommunicator(String ipAddr) {
         this.ipAddr = ipAddr;
         try{
-            this.masterSocket = new DatagramSocket(null);
-            this.masterSocket.bind(new InetSocketAddress(ipAddr, Config.MASTER_PORT_NUMBER));
+//            this.masterSocket = new DatagramSocket(null);
+//            this.masterSocket.bind(new InetSocketAddress(ipAddr, Config.MASTER_PORT_NUMBER));
+            this.masterSocket = new DatagramSocket(Config.MASTER_PORT_NUMBER);
             this.masterSocket.setSoTimeout(Config.MASTER_RECEIVE_WAIT_TIMEOUT);
             usedPort = Config.MASTER_PORT_NUMBER;
         } catch (SocketException e) {
             System.err.printf("Failed to create socket for master: %s. Try to create it with the secondary port %d",
                     e.getMessage(), Config.MASTER_SECONDARY_PORT_NUMBER);
             try{
-                this.masterSocket = new DatagramSocket(null);
-                this.masterSocket.bind(new InetSocketAddress(ipAddr, Config.MASTER_SECONDARY_PORT_NUMBER));
-                this.masterSocket.setSoTimeout(Config.MASTER_RECEIVE_WAIT_TIMEOUT);
+//                this.masterSocket = new DatagramSocket(null);
+//                this.masterSocket.bind(new InetSocketAddress(ipAddr, Config.MASTER_SECONDARY_PORT_NUMBER));
+                this.masterSocket = new DatagramSocket(Config.MASTER_SECONDARY_PORT_NUMBER);
                 usedPort = Config.MASTER_SECONDARY_PORT_NUMBER;
             } catch (SocketException ee){
                 System.err.printf("Failed to create socket for master: %s. End the process.",
@@ -70,6 +71,14 @@ public class MasterCommunicator implements Runnable{
                 System.err.printf("Master failed to receive message: %s", e.getMessage());
                 System.exit(-1);
             }
+
+            try{
+                Thread.sleep(Config.MASTER_SLEEP_INTERVAL);
+            } catch (InterruptedException e) {
+                System.err.printf("Master failed to sleep: %s", e.getMessage());
+                System.exit(-1);
+            }
+
             try {
                 for (int i = 0; i < Config.MASTER_MAXIMUM_SENDING_NUM_PER_ROUND; i++) {
                     Message m = MasterQueueManager.getManager().pollSending();

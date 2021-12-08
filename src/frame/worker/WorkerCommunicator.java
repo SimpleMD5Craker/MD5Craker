@@ -65,6 +65,14 @@ public class WorkerCommunicator implements Runnable{
                 System.err.printf("Worker failed to receive message: %s", e.getMessage());
                 System.exit(-1);
             }
+
+            try{
+                Thread.sleep(Config.WORKER_SLEEP_INTERVAL);
+            } catch (InterruptedException e) {
+                System.err.printf("Worker failed to sleep!");
+                System.exit(-1);
+            }
+
             try {
                 for (int i = 0; i < Config.WORKER_MAXIMUM_SENDING_NUM_PER_ROUND; i++) {
                     Message m = WorkerQueueManager.getManager().pollSending();
