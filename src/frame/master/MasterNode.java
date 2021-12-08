@@ -149,9 +149,9 @@ public class MasterNode implements Node {
                             // TODO: implement the real task partition logic, now we use the hardcoded implementation for test
                             int start = 0;
                             while(start < Math.pow(26,5)){
-                                int end = start + 99999;
+                                int end = start + 1999999;
                                 Task t = new Task(userUid, start+":"+end);
-                                start+=100000;
+                                start+=2000000;
                                 String assignedWorker = getWorkerWithMinimumTask();
                                 runningTasks.put(t, new Utils.Pair<>(assignedWorker, Instant.now()));
                                 MasterQueueManager.getManager().newSending(new Message(Message.Type.ASSIGNMENT, t,
