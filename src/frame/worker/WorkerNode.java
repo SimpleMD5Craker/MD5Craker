@@ -11,10 +11,13 @@ public class WorkerNode implements Node {
     /* IP:Port address of master */
     private final String masterAddress;
 
+    private final Cracker finder;
+
 
     public WorkerNode(String masterAddr, String selfAddress){
         communicator = new WorkerCommunicator(selfAddress);
         masterAddress = masterAddr;
+        finder = new Cracker(this);
     }
 
     String getMasterAddress() {
@@ -28,7 +31,9 @@ public class WorkerNode implements Node {
     @Override
     public void run() {
         Thread con = new Thread(communicator);
+        Thread finder = new Thread(this.finder);
         con.start();
+        finder.start();
         // Send register request
         Message register = new Message(Message.Type.REGISTER, null, masterAddress, communicator.getStrAddress());
         WorkerQueueManager.getManager().newSending(register);
@@ -48,6 +53,7 @@ public class WorkerNode implements Node {
                 } else {
                     if(m.getType() == Message.Type.ASSIGNMENT) {
                         WorkerQueueManager.getManager().newTask(m.getTask());
+                        System.out.printf("Worker %s received a task %s\n", getSelfAddress(), m.getTask());
                     }
                 }
             }

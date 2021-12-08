@@ -104,7 +104,7 @@ public class Message {
 
     public static Message parseString(String strMessage) {
         String[] segments = strMessage.split("\\$");
-        if(segments.length != 3) {
+        if(segments.length != 4) {
             return null;
         }
         Type type = Type.parseType(segments[0]);

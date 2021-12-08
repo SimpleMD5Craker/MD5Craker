@@ -21,6 +21,7 @@ class MasterQueueManager {
         receivedMsg = new ConcurrentLinkedQueue<>();
         toSendMsg = new ConcurrentLinkedQueue<>();
         newComingUsers = new ConcurrentLinkedQueue<>();
+        resultsQueue = new ConcurrentLinkedQueue<>();
     }
 
     public static MasterQueueManager getManager() {

@@ -31,17 +31,18 @@ public class MasterCommunicator implements Runnable{
     public MasterCommunicator(String ipAddr) {
         this.ipAddr = ipAddr;
         try{
-            this.masterSocket = new DatagramSocket(null);
-            this.masterSocket.bind(new InetSocketAddress(ipAddr, Config.MASTER_PORT_NUMBER));
+//            this.masterSocket = new DatagramSocket(null);
+//            this.masterSocket.bind(new InetSocketAddress(ipAddr, Config.MASTER_PORT_NUMBER));
+            this.masterSocket = new DatagramSocket(Config.MASTER_PORT_NUMBER);
             this.masterSocket.setSoTimeout(Config.MASTER_RECEIVE_WAIT_TIMEOUT);
             usedPort = Config.MASTER_PORT_NUMBER;
         } catch (SocketException e) {
             System.err.printf("Failed to create socket for master: %s. Try to create it with the secondary port %d",
                     e.getMessage(), Config.MASTER_SECONDARY_PORT_NUMBER);
             try{
-                this.masterSocket = new DatagramSocket(null);
-                this.masterSocket.bind(new InetSocketAddress(ipAddr, Config.MASTER_SECONDARY_PORT_NUMBER));
-                this.masterSocket.setSoTimeout(Config.MASTER_RECEIVE_WAIT_TIMEOUT);
+//                this.masterSocket = new DatagramSocket(null);
+//                this.masterSocket.bind(new InetSocketAddress(ipAddr, Config.MASTER_SECONDARY_PORT_NUMBER));
+                this.masterSocket = new DatagramSocket(Config.MASTER_SECONDARY_PORT_NUMBER);
                 usedPort = Config.MASTER_SECONDARY_PORT_NUMBER;
             } catch (SocketException ee){
                 System.err.printf("Failed to create socket for master: %s. End the process.",
@@ -53,28 +54,41 @@ public class MasterCommunicator implements Runnable{
 
     @Override
     public void run() {
+        System.out.println("Master communicator start!");
         while(true) {
             try {
-                byte[] data = new byte[Config.MASTER_MAXIMUM_RECEIVE_DATA_SIZE];
-                DatagramPacket received = new DatagramPacket(data, data.length);
-                masterSocket.receive(received);
-                String strMessage = new String(received.getData(), received.getOffset(), received.getLength(),
-                        StandardCharsets.UTF_8);
-                Message m = Message.parseString(strMessage);
-                if(m != null) {
-                    MasterQueueManager.getManager().newReceived(m);
+                for(int i = 0; i < Config.MASTER_MAXIMUM_CHECK_RECEIVED_NUM * 2; i++) {
+                    byte[] data = new byte[Config.MASTER_MAXIMUM_RECEIVE_DATA_SIZE];
+                    DatagramPacket received = new DatagramPacket(data, data.length);
+                    masterSocket.receive(received);
+                    String strMessage = new String(received.getData(), received.getOffset(), received.getLength(),
+                            StandardCharsets.UTF_8);
+                    Message m = Message.parseString(strMessage);
+//                    System.out.printf("Master received message: %s\n", m);
+                    if (m != null) {
+                        MasterQueueManager.getManager().newReceived(m);
+                    }
                 }
             } catch (SocketTimeoutException e) {
-                System.out.println(e.getMessage());
+//                System.out.println(e.getMessage());
             } catch (IOException e) {
                 System.err.printf("Master failed to receive message: %s", e.getMessage());
                 System.exit(-1);
             }
+
+            try{
+                Thread.sleep(Config.MASTER_SLEEP_INTERVAL);
+            } catch (InterruptedException e) {
+                System.err.printf("Master failed to sleep: %s", e.getMessage());
+                System.exit(-1);
+            }
+
             try {
                 for (int i = 0; i < Config.MASTER_MAXIMUM_SENDING_NUM_PER_ROUND; i++) {
                     Message m = MasterQueueManager.getManager().pollSending();
                     if (m != null) {
                         if (m.getTargetAddress() != null && !m.getTargetAddress().equals("empty")) {
+//                            System.out.printf("Master communicator send message %s\n", m);
                             String[] strAddress = m.getTargetAddress().split(":");
                             InetSocketAddress address = new InetSocketAddress(strAddress[0], Integer.parseInt(strAddress[1]));
                             byte[] sendingData = m.toString().getBytes(StandardCharsets.UTF_8);

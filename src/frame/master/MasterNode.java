@@ -13,6 +13,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Random;
 
 public class MasterNode implements Node {
 
@@ -113,7 +114,9 @@ public class MasterNode implements Node {
             runningTasks.remove(t);
         }
         if(t.isResultsFound()) {
-            String user = t.getUserUid().split(":")[0];
+            System.out.printf("Worker %s find answer \"%s\" for user:%s\n", worker, t.getResult(),
+                    t.getUserUid().split(":")[0]);
+            String user = t.getUserUid();
             MasterQueueManager.getManager().newResult(String.join(":",
                     user, t.getResult()));
             userFinished(user);
@@ -128,36 +131,42 @@ public class MasterNode implements Node {
     @Override
     public void run() {
         Thread con = new Thread(communicator);
+        Thread in = new Thread(new SimpleInputer());
         con.start();
+        in.start();
         while(true) {
             // 1. Begin to dispatch new task, first check whether there are workers, then check whether there is new
-            //coming request, TODO: finally check whether there are waiting tasks
+            //coming request
             if(workers.size() > 0) {
                 String userUid = MasterQueueManager.getManager().pollUser();
                 if(userUid != null) {
-                    runningUsers.add(userUid);
-                    // partition the task now.
-                    String[] idAndInput = userUid.split(":");
-                    if(idAndInput.length == 2) {
-                        // only when the format of the userUid is correct we process the request
-                        // TODO: implement the real task partition logic, now we use the hardcoded implementation for test
-                        Task t1 = new Task(userUid, "aaaaa:bbbbb");
-                        Task t2 = new Task(userUid, "bbbbc:ccccc");
-                        String assignedWorker = getWorkerWithMinimumTask();
-                        MasterQueueManager.getManager().newSending(new Message(Message.Type.ASSIGNMENT, t1,
-                                assignedWorker, communicator.getStrAddress()));
-                        runningTasks.put(t1, new Utils.Pair<>(assignedWorker, Instant.now()));
-                        addWorkerNumTask(1, assignedWorker);
-
-                        assignedWorker = getWorkerWithMinimumTask();
-                        MasterQueueManager.getManager().newSending(new Message(Message.Type.ASSIGNMENT, t2,
-                                assignedWorker, communicator.getStrAddress()));
-                        runningTasks.put(t2, new Utils.Pair<>(assignedWorker, Instant.now()));
-                        addWorkerNumTask(1, assignedWorker);
+                    System.out.printf("Master begin to assign tasks: %s\n", userUid);
+                    for(int i = 0; i < Config.MASTER_MAXIMUM_ADDED_USER_PER_ROUND; i++){
+                        runningUsers.add(userUid);
+                        // partition the task now.
+                        String[] idAndInput = userUid.split(":");
+                        if(idAndInput.length == 2) {
+                            // only when the format of the userUid is correct(userID:Input) we process the request
+                            // TODO: implement the real task partition logic, now we use the hardcoded implementation for test
+                            int start = 0;
+                            while(start < Math.pow(26,5)){
+                                int end = start + 99999;
+                                Task t = new Task(userUid, start+":"+end);
+                                start+=100000;
+                                String assignedWorker = getWorkerWithMinimumTask();
+                                runningTasks.put(t, new Utils.Pair<>(assignedWorker, Instant.now()));
+                                MasterQueueManager.getManager().newSending(new Message(Message.Type.ASSIGNMENT, t,
+                                        assignedWorker, communicator.getStrAddress()));
+                                addWorkerNumTask(1, assignedWorker);
+                            }
+                        }
+                        userUid = MasterQueueManager.getManager().pollUser();
+                        if(userUid == null) {
+                            break;
+                        }
                     }
                 }
             }
-
             try{
                 Thread.sleep(Config.MASTER_SLEEP_INTERVAL);
             } catch (InterruptedException e) {
@@ -260,7 +269,31 @@ public class MasterNode implements Node {
                 runningTasks.remove(t);
                 waitingTasks.offer(t);
             }
-            // TODO: 3.2 Check other timeout tasks, may not need this.
+
+            // 3.2 Check other timeout tasks
+            HashSet<Task> timeoutTasks = new HashSet<>();
+            for(Task t: runningTasks.keySet()) {
+                Instant now = Instant.now();
+                if(Duration.between(runningTasks.get(t).getV1(), now).toMillis() > Config.MASTER_TASK_TIMEOUT) {
+                    timeoutTasks.add(t);
+                }
+            }
+            for(Task t: timeoutTasks) {
+                stopTask(t);
+            }
+
+            // 4. Redispatch the tasks in the waited queue
+            if(workers.size() > 0){
+                HashSet<Task> resurrectTasks = new HashSet<>(waitingTasks);
+                for(Task t: resurrectTasks) {
+                    String assignedWorker = getWorkerWithMinimumTask();
+                    runningTasks.put(t, new Utils.Pair<>(assignedWorker, Instant.now()));
+                    waitingTasks.remove(t);
+                    MasterQueueManager.getManager().newSending(new Message(Message.Type.ASSIGNMENT, t,
+                            assignedWorker, communicator.getStrAddress()));
+                    addWorkerNumTask(1, assignedWorker);
+                }
+            }
 
         }
     }
