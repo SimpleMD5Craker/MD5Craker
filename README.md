@@ -16,7 +16,7 @@ you can use the following instructions to install flask:
 `pip install flask_cors`
 
 ### Clone the project
-`https://github.com/SimpleMD5Craker/MD5Craker.git`
+`git clone https://github.com/SimpleMD5Craker/MD5Craker.git`
 
 ### Deployment of The Web Server
 
