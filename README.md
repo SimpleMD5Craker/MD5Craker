@@ -13,6 +13,7 @@ you can use the following instructions to install Java8 environment:
 #### Python 2.7 with flask
 you can use the following instructions to install flask:
 `pip install flask`
+`pip install flask_cors`
 
 ### Deployment of The Web Server
 
