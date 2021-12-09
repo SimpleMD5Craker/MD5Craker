@@ -27,9 +27,10 @@ def decode():
     print("send: {}".format(message))
     recv_msg, _ = s.recvfrom(2048)
     recv_msg = recv_msg.decode()
+    return_uid = recv_msg.strip().split(':')[0]
     code = recv_msg.strip().split(':')[-1]
     end = time.time()
-    res = {"uid":uid, "result":code, "time": end - start}
+    res = {"uid":return_uid, 'password': password, "result":code, "time": end - start}
     print(res)
     return res
     
