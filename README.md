@@ -8,20 +8,55 @@
 
 #### Java8
 you can use the following instructions to install Java8 environment:
-``
+`apt-get install openjdk-8-jre-headless`
 
 #### Python 2.7 with flask
-you can use the following instructions to install flask:
-`pip install flask`
+you can use the following instructions to install flask:  
+`pip install flask`  
 `pip install flask_cors`
+
+#### GENI Resources  
+you will need to download the `rspec.xml` and upload it to geni protal to create our GENI topology.  
 
 ### Clone the project
 `git clone https://github.com/SimpleMD5Craker/MD5Craker.git`
 
 ### Deployment of The Web Server
+- SSH to your master node. Note done the ip address of your master node. The use following instructions to install Apache2:  
+```
+sudo apt update
+sudo apt install apache2
+sudo ufw status // make sure the fire wall is inactive
+```  
+- Create your homepage dir and allow you to modify the files on it:  
+```
+sudo mkdir -p /var/www/<your_hostname>.com/html
+sudo chown -R <user_name> /var/www/<your_hostname>.com/html
+sudo chmod -R 755 /var/www/<your_hostname>.com
+```  
+- Download the index.html and replace the url at line 84 with the ip address of your master node  
+-Configure the apache virtual machine:  
+```
+sudo nano /etc/apache2/sites-available/<your_hostname>.com.conf
 
-
-
+// then paste the following code into the <your_hostname>.com.conf
+<VirtualHost *:80>
+ServerAdmin admin@<your_hostname>.com
+ServerName <your_hostname>.com
+ServerAlias www.pc.com
+DocumentRoot /var/www/<your_hostname>.com/html
+ErrorLog ${APACHE_LOG_DIR}/error.log
+CustomLog ${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
+```
+- Enable the new configure file and disable the old configure file:
+```
+sudo a2ensite <your_hostname>.com.conf
+sudo a2dissite 000-default.conf
+sudo systemctl restart apache2
+```
+- Now you should be able to visity the website through http://ip_address_of_your_master_node/
+- We also provide a video instruction FrontEndDeploymentInstructions.mp4.
 
 
 ### Download java and python runnable files
