@@ -16,7 +16,7 @@ you can use the following instructions to install flask:
 `pip install flask_cors`
 
 #### GENI Resources  
-you will need to download the `rspec.xml` and upload it to geni protal to create our GENI topology.  
+you will need to download the `rspec.xml` and upload it to geni protal to reproduce our GENI topology.  
 
 ### Clone the project
 `git clone https://github.com/SimpleMD5Craker/MD5Craker.git`
