@@ -3,12 +3,18 @@
 ## How to user it
 
 ### Prerequisite
+#### Linux Version
+`Ubuntu 18.04.1 LTS` 
 
-`Java8`
+#### Java8
+you can use the following instructions to install Java8 environment:
+`xxx`
 
-`Python 2.7` with flask
+#### Python 2.7 with flask
+you can use the following instructions to install flask:
+`xxx`
 
-### Deployment Web service
+### Deployment of The Web Server
 
 
 
