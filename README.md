@@ -8,12 +8,15 @@
 
 #### Java8
 you can use the following instructions to install Java8 environment:
-`xxx`
+``
 
 #### Python 2.7 with flask
 you can use the following instructions to install flask:
 `pip install flask`
 `pip install flask_cors`
+
+### Clone the project
+`https://github.com/SimpleMD5Craker/MD5Craker.git`
 
 ### Deployment of The Web Server
 
