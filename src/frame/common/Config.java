@@ -20,7 +20,7 @@ public class Config {
     /* The maximum number of users that can be added to running users queue per round */
     public static int MASTER_MAXIMUM_ADDED_USER_PER_ROUND = 5;
 
-    public static long MASTER_TASK_TIMEOUT = 30000; // ms, it is actually 1 minutes, this can be modified according to task type
+    public static long MASTER_TASK_TIMEOUT = 180000; // ms, it is actually 1 minutes, this can be modified according to task type
 
     public static long MASTER_WORKER_TIMEOUT = 3000; // ms
 

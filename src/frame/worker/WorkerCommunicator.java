@@ -63,7 +63,7 @@ public class WorkerCommunicator implements Runnable{
                     }
                 }
             } catch (SocketTimeoutException e) {
-                System.out.println(e.getMessage());
+
             } catch (IOException e) {
                 System.err.printf("Worker failed to receive message: %s", e.getMessage());
                 System.exit(-1);

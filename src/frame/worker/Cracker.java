@@ -39,7 +39,7 @@ public class Cracker implements Runnable{
         while(true) {
             Task t = WorkerNode.getNewTask();
             if(t != null) {
-                while(true) {
+                for(int i = 0; i < 10; i++) {
                     String input = t.getUserUid().split(":")[1];
                     String[] range = t.getRange().split(":");
                     int low = Integer.parseInt(range[0]);
@@ -47,7 +47,7 @@ public class Cracker implements Runnable{
                     String result = "notFound";
                     try {
                         String pythonFile = this.pythonCommand + " --password " +input+ " --left " +low+ " --right "+up;
-                        System.out.println("run python file: "+pythonFile);
+                        System.out.println("run task for user: " + t.getUserUid());
                         proc = Runtime.getRuntime().exec(pythonFile);
                         BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
                         String line = null;

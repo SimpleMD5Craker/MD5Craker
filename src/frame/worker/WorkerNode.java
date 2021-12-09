@@ -52,15 +52,21 @@ public class WorkerNode implements Node {
                     break;
                 } else {
                     if(m.getType() == Message.Type.ASSIGNMENT) {
-                        WorkerQueueManager.getManager().newTask(m.getTask());
-                        System.out.printf("Worker %s received a task %s\n", getSelfAddress(), m.getTask());
+                        if(m.getTask() == null) {
+                            // Ended mark, end the task of m.getEndedUser()
+                            System.out.println("Remove tasks of user " + m.getEndedUser());
+                            WorkerQueueManager.getManager().removeTaskOfSpecifiedUser(m.getEndedUser());
+                        }else{
+                            WorkerQueueManager.getManager().newTask(m.getTask());
+                            System.out.printf("Worker %s received a task %s\n", getSelfAddress(), m.getTask());
+                        }
                     }
                 }
             }
 
             // 2. Prepare heartbeat message to master
             // TODO: get task from cracker
-            Message heartbeat = new Message(Message.Type.HEARTBEAT, null, getMasterAddress(), getSelfAddress());
+            Message heartbeat = new Message(Message.Type.HEARTBEAT, WorkerQueueManager.getManager().peekTask(), getMasterAddress(), getSelfAddress());
             WorkerQueueManager.getManager().newSending(heartbeat);
         }
     }

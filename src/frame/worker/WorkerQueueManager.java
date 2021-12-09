@@ -60,4 +60,17 @@ class WorkerQueueManager {
         }
 
     }
+
+    public Task peekTask() {
+        if(taskQueue.isEmpty()) {
+            return null;
+        } else {
+            return taskQueue.peek();
+        }
+    }
+
+    public void removeTaskOfSpecifiedUser(String user) {
+        taskQueue.removeIf(t -> t.getUserUid().equals(user));
+    }
+
 }

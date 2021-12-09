@@ -119,6 +119,23 @@ public class MasterNode implements Node {
             MasterQueueManager.getManager().newResult(String.join(":",
                     user, t.getResult()));
             userFinished(user);
+            // Remove all running tasks of the same user
+            HashSet<Task> removed = new HashSet<>();
+            for(Task tt: runningTasks.keySet()) {
+                if(tt.getUserUid().equals(user)) {
+                    removed.add(tt);
+                }
+            }
+            for(Task tt: removed) {
+                addWorkerNumTask(-1, runningTasks.get(tt).getV0());
+                runningTasks.remove(tt);
+            }
+            // Send end message to all workers
+            for(String w: workers.keySet()) {
+                Message m = new Message(Message.Type.ASSIGNMENT, null, w, getSelfAddress());
+                m.setEndedUser(user);
+                MasterQueueManager.getManager().newSending(m);
+            }
         }
     }
 
@@ -149,9 +166,9 @@ public class MasterNode implements Node {
                             // TODO: implement the real task partition logic, now we use the hardcoded implementation for test
                             int start = 0;
                             while(start < Math.pow(26,5)){
-                                int end = start + 1999999;
+                                int end = start + 1499999;
                                 Task t = new Task(userUid, start+":"+end);
-                                start+=2000000;
+                                start+=1500000;
                                 String assignedWorker = getWorkerWithMinimumTask();
                                 runningTasks.put(t, new Utils.Pair<>(assignedWorker, Instant.now()));
                                 MasterQueueManager.getManager().newSending(new Message(Message.Type.ASSIGNMENT, t,
@@ -199,6 +216,8 @@ public class MasterNode implements Node {
                         } else {
                             // Update last update time of the worker
                             workers.get(workerAddr).setV1(Instant.now());
+                            // This worker may shut down for a little while and quickly restart, in this situation, the
+                            // Worker has no task to do, but there may be some running tasks of it, redispatch these tasks
                         }
                     } else {
                         // worker is busy now

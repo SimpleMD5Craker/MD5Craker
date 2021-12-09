@@ -60,11 +60,27 @@ public class Message {
 
     private String srcAddress;
 
+    /* If this field is not "empty", then the corresponded user's task have no need to execute */
+    private String endedUser;
+
     public Message(Type type, Task task, String tgt, String src) {
         this.type = type;
         this.task = task;
         this.targetAddress = tgt;
         this.srcAddress = src;
+        this.endedUser = "empty";
+    }
+
+    public void setEndedUser(String user){
+        this.endedUser = user;
+    }
+
+    public boolean hasEndedUser(){
+        return endedUser.equals("empty");
+    }
+
+    public String getEndedUser(){
+        return endedUser;
     }
 
     public Type getType() {
@@ -99,12 +115,12 @@ public class Message {
         if(srcAddr == null) {
             srcAddr = "empty";
         }
-        return String.join("$", type.toString(), strTask, tgtAddr, srcAddr);
+        return String.join("$", type.toString(), strTask, tgtAddr, srcAddr, endedUser);
     }
 
     public static Message parseString(String strMessage) {
         String[] segments = strMessage.split("\\$");
-        if(segments.length != 4) {
+        if(segments.length != 5) {
             return null;
         }
         Type type = Type.parseType(segments[0]);
@@ -117,7 +133,9 @@ public class Message {
         } else {
             task = Task.parseString(segments[1]);
         }
-        return new Message(type, task, segments[2], segments[3]);
+        Message ret = new Message(type, task, segments[2], segments[3]);
+        ret.setEndedUser(segments[4]);
+        return ret;
     }
 
 }
