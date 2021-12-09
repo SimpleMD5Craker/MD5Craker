@@ -28,7 +28,7 @@
 
   `java -jar Cracker.jar worker [ip of the worker node] [ip:port of the master node]`
 
-  Here the port number of master node is fixed to 12345.
+  Here the port number of master node is fixed to 12345, and if the master has multiple NICs, choose the one that is in the same subnet of the worker node.
 
 - For master node, the command is:
 
