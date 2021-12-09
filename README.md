@@ -56,7 +56,7 @@ sudo a2dissite 000-default.conf
 sudo systemctl restart apache2
 ```
 - Now you should be able to visity the website through http://ip_address_of_your_master_node/
-- We also provide a video instruction FrontEndDeploymentInstructions.mp4.
+- We also provide a video instruction https://youtu.be/ieVABTqqMKU.
 
 
 ### Download java and python runnable files
